@@ -2,132 +2,76 @@
 
 ## Overview
 
-Mini-RAG is a containerized Retrieval-Augmented Generation (RAG) system built with FastAPI. The system enables intelligent natural-language querying over a collection of recipe documents and can answer questions about ingredients, cooking steps, quantities, and preparation instructions in both English and Arabic.
+Mini-RAG is a containerized Retrieval-Augmented Generation (RAG) system developed as part of an NLP Engineering Project.
 
-The application processes raw HTML recipe files, converts them into semantic embeddings, stores them in a vector database, retrieves the most relevant information for a user query, and generates context-aware answers using a Large Language Model (LLM).
+The system enables intelligent question answering over recipe documents by combining semantic search with Large Language Models (LLMs). Users can upload recipe documents, process and index them, and ask questions in natural language to receive context-aware answers grounded in the retrieved content.
+
+The project supports both English and Arabic queries and follows clean software engineering practices through a layered architecture, Factory Design Pattern, and Docker-based deployment.
 
 ---
 
-## Features
+## Key Features
 
-* HTML recipe document ingestion
+* Retrieval-Augmented Generation (RAG)
 * English and Arabic language support
-* Custom parsing and preprocessing pipeline
-* Token-based chunking strategy
-* Semantic embeddings using Sentence Transformers
-* Vector similarity search with Qdrant
+* HTML document ingestion and processing
+* Semantic chunking and indexing
+* Vector similarity search using Qdrant
 * MongoDB document storage
 * FastAPI REST API
 * Dockerized deployment
-* Retrieval-Augmented Generation (RAG)
-* Factory Design Pattern for LLM and Vector Database providers
+* Factory Pattern for LLM providers
+* Factory Pattern for Vector Database providers
+* Modular and maintainable architecture
 
 ---
 
-## System Architecture
+## Technology Stack
 
-```text
-User Query
-    │
-    ▼
-FastAPI API Layer
-    │
-    ▼
-Embedding Model
-    │
-    ▼
-Qdrant Vector Database
-    │
-    ▼
-Top-K Retrieval
-    │
-    ▼
-LLM Context Injection
-    │
-    ▼
-Generated Answer
-```
+### Backend
 
-### Architecture Layers
+* FastAPI
+* Python
 
-1. Client Layer
+### Databases
 
-   * Streamlit UI
-   * HTTP Client
+* MongoDB
+* Qdrant Vector Database
 
-2. API Layer
+### NLP
 
-   * FastAPI routes
-   * Health checks
-   * Upload endpoints
-   * Processing endpoints
-   * Search endpoints
-   * Answer generation endpoints
+* Sentence Transformers
+* OpenAI-Compatible LLM APIs
 
-3. Controller Layer
+### Infrastructure
 
-   * File management
-   * Data processing
-   * Chunk generation
-   * Vector search
-   * RAG answer generation
-
-4. Data Layer
-
-   * MongoDB
-   * Project storage
-   * Chunk storage
-
-5. Stores Layer
-
-   * LLM Factory
-   * VectorDB Factory
-   * Embedding Provider
-   * Prompt Templates
-
-6. Infrastructure Layer
-
-   * Docker
-   * Docker Compose
-   * MongoDB Container
-   * Qdrant Container
-   * FastAPI Container
+* Docker
+* Docker Compose
 
 ---
 
-## Workflow
+## System Workflow
 
-### 1. Ingest
-
-HTML recipe files are uploaded and stored under a project namespace.
-
-### 2. Process
-
-The uploaded files are parsed, cleaned, and split into semantic chunks.
-
-### 3. Index
-
-Chunks are embedded using a multilingual Sentence Transformer model and stored in Qdrant.
-
-### 4. Query
-
-User questions are embedded and matched against indexed chunks using cosine similarity.
-
-### 5. Generate
-
-The most relevant chunks are injected into an LLM prompt to generate the final answer.
+1. Upload HTML recipe documents.
+2. Parse and clean document content.
+3. Split content into chunks.
+4. Generate embeddings for chunks.
+5. Store embeddings in Qdrant.
+6. Store metadata and chunks in MongoDB.
+7. Receive a user query.
+8. Retrieve the most relevant chunks.
+9. Inject retrieved context into the LLM prompt.
+10. Generate a grounded answer.
 
 ---
 
 ## Embedding Model
 
-Model:
-
 ```text
 sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 ```
 
-Configuration:
+### Configuration
 
 * Embedding Dimension: 384
 * Similarity Metric: Cosine Similarity
@@ -136,10 +80,12 @@ Configuration:
 
 ## Chunking Strategy
 
-* Chunk Size: 500 Tokens
-* Overlap: 50 Tokens
+| Parameter  | Value      |
+| ---------- | ---------- |
+| Chunk Size | 500 Tokens |
+| Overlap    | 50 Tokens  |
 
-This strategy balances retrieval accuracy with contextual completeness while reducing information loss between chunks.
+This strategy helps preserve context across chunk boundaries while maintaining efficient retrieval performance.
 
 ---
 
@@ -151,19 +97,11 @@ This strategy balances retrieval accuracy with contextual completeness while red
 GET /api/
 ```
 
-Returns application status.
-
----
-
-### Upload File
+### Upload Documents
 
 ```http
 POST /api/data/upload/{project_id}
 ```
-
-Uploads an HTML recipe document.
-
----
 
 ### Process Documents
 
@@ -171,51 +109,65 @@ Uploads an HTML recipe document.
 POST /api/data/process/{project_id}
 ```
 
-Parses files and creates chunks.
-
----
-
-### Push Embeddings to Vector Store
+### Generate and Store Embeddings
 
 ```http
 POST /api/nlp/index/push/{project_id}
 ```
 
-Generates embeddings and stores them in Qdrant.
-
----
-
-### Search Similar Chunks
+### Semantic Search
 
 ```http
 POST /api/nlp/index/search/{project_id}
 ```
 
-Retrieves top-k relevant chunks.
-
----
-
-### Generate Answer
+### RAG Question Answering
 
 ```http
 POST /api/nlp/index/answer/{project_id}
 ```
 
-Executes the complete Retrieval-Augmented Generation pipeline.
+---
+
+## Project Structure
+
+```text
+src/
+├── controllers/
+├── helpers/
+├── models/
+├── routes/
+├── stores/
+│   ├── llm/
+│   │   ├── LLMFactory.py
+│   │   └── LLMInterface.py
+│   │
+│   └── vectordb/
+│       ├── VectorDBFactory.py
+│       └── VectorDBInterface.py
+│
+├── main.py
+
+docker/
+├── mongodb/
+└── qdrant_data/
+
+Dockerfile
+docker-compose.yaml
+requirements.txt
+```
 
 ---
 
-## Technologies Used
+## Design Patterns
 
-* Python
-* FastAPI
-* MongoDB
-* Qdrant
-* Docker
-* Docker Compose
-* Sentence Transformers
-* OpenAI-Compatible LLM APIs
-* Streamlit
+### LLM Factory Pattern
+
+The system uses an LLM Factory Pattern that abstracts the underlying language model provider and allows switching between providers without changing business logic.
+
+### Vector Database Factory Pattern
+
+A VectorDB Factory Pattern abstracts vector database implementations, making the retrieval layer extensible and maintainable.
 
 ---
 
@@ -232,28 +184,11 @@ Executes the complete Retrieval-Augmented Generation pipeline.
 docker compose up --build
 ```
 
-### Services
+### Services Started
 
 * FastAPI Application
-* MongoDB
-* Qdrant
-
----
-
-## Project Structure
-
-```text
-RAG-NLP-System
-│
-├── src/
-├── docker/
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── README.md
-└── docs/
-    └── Mini_RAG_Technical_Report.pdf
-```
+* MongoDB Container
+* Qdrant Container
 
 ---
 
@@ -280,4 +215,4 @@ docs/Mini_RAG_Technical_Report.pdf
 
 ## Academic Project
 
-This project was developed as part of the NLP Engineering Project and demonstrates the design and implementation of a production-oriented Retrieval-Augmented Generation (RAG) system using modern NLP, vector databases, software engineering principles, and containerized deployment.
+This project was developed for the NLP Engineering Project and demonstrates the implementation of a production-oriented Retrieval-Augmented Generation (RAG) pipeline using modern NLP techniques, vector databases, software engineering principles, and containerized deployment.
